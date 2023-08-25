@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Thanos{% block title %}{% endblock %}</title>
+
+    {# <link rel="icon" type="image/webp" sizes="1024x1024" href="/static/img/favicon.webp">
+    <link rel="icon" type="image/png" sizes="1024x1024" href="/static/img/favicon.png">
+    <link rel="icon" type="image/x-icon" sizes="16x16 32x32 64x64" href="/static/img/favicon.ico"> #}
+
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="mt-4 mb-5">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h3 class="mb-0">🆃hanos</h3>
+                </div>
+                {% if user %}
+                <form class="d-flex align-items-center" method="post" action="/logout">
+                    {% if user.img.href %}
+                    <img class="me-1 rounded" src="{{ user.img.href }}" width="28" height="28" alt="Profile picture">
+                    {% endif %}
+                    <div>{{ user.display_name }}</div>
+                    <button type="submit" class="btn btn-sm btn-link">Logout</button>
+                </form>
+                {% endif %}
+            </div>
+
+            {% block body %}{% endblock %}
+        </div>
+    </div>
+
+    <link href="/static/css/tagify.css" rel="stylesheet">
+    <link href="/static/css/clusterize.css" rel="stylesheet">
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/tagify.min.js"></script>
+    <script src="/static/js/clusterize.min.js"></script>
+    <script src="/static/js/script.js" type="module"></script>
+
+</body>
+
+</html>

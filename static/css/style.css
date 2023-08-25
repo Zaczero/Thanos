@@ -1,0 +1,62 @@
+.changeset-list {
+    min-height: 60ch;
+    max-height: 60ch;
+    overflow-y: auto;
+    user-select: none;
+}
+
+.changeset-item.dragging {
+    opacity: 0.5;
+}
+
+.dragging .changeset-item * {
+    pointer-events: none;
+}
+
+.changeset-item .card-body {
+    padding: .2em .4em;
+}
+
+.changeset-item .header {
+    font-size: 0.9em;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.changeset-item .comment {
+    font-style: italic;
+    font-size: 0.8em;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.changeset-list.dragging-effects {
+    box-shadow: 0 0 0 .2em dodgerblue;
+}
+
+.changeset-item.dragging-effects {
+    border-top: .2em dashed dodgerblue;
+}
+
+#legitimate .hide-legitimate,
+#uncategorized .hide-uncategorized,
+#malicious .hide-malicious {
+    display: none;
+}
+
+.micro {
+    font-size: .8em;
+}
+
+.micro .btn {
+    font-size: .8em;
+    padding: 0 .15em;
+}
+
+.form-check-label {
+    user-select: none;
+}

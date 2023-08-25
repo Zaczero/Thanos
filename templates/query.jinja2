@@ -1,0 +1,104 @@
+{% extends '_base.jinja2' %}
+{% block body %}
+
+<div class="card mb-3">
+    <div class="card-body pb-2">
+        <h5 class="card-title">Auto-move changesets</h5>
+        <div class="row">
+            <div class="col text-center">
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox" data-auto-move="blocked" checked>
+                        Blocked user
+                    </label>
+                </div>
+            </div>
+            <div class="col-auto">
+                <i>or</i>
+            </div>
+            <div class="col text-center">
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="checkbox" data-auto-move="deleted" checked>
+                        Deleted account
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer text-center">
+        <div class="row">
+            <div class="col-4">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-auto-move-from="legitimate"
+                    data-auto-move-to="uncategorized">→Uncategorized</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-auto-move-from="legitimate"
+                    data-auto-move-to="malicious">→Malicious</button>
+            </div>
+            <div class="col-4">
+                <button type="button" class="btn btn-sm btn-outline-success" data-auto-move-from="uncategorized"
+                    data-auto-move-to="legitimate">→Legitimate</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-auto-move-from="uncategorized"
+                    data-auto-move-to="malicious">→Malicious</button>
+            </div>
+            <div class="col-4">
+                <button type="button" class="btn btn-sm btn-outline-success" data-auto-move-from="malicious"
+                    data-auto-move-to="legitimate">→Legitimate</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-auto-move-from="malicious"
+                    data-auto-move-to="uncategorized">→Uncategorized</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="category col-4 border-end" id="legitimate">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title text-success mb-0">Legitimate</h5>
+                    <div><span class="counter">0</span> changesets</div>
+                </div>
+                <div class="changeset-list">
+                    <div class="clusterize-content">
+                    </div>
+                </div>
+            </div>
+            <div class="category col-4 border-end" id="uncategorized">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title text-dark mb-0">Uncategorized</h5>
+                    <div><span class="counter">0</span> changesets</div>
+                </div>
+                <div class="changeset-list">
+                    <div class="clusterize-content">
+                    </div>
+                </div>
+            </div>
+            <div class="category col-4" id="malicious">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title text-danger mb-0">
+                        Malicious
+                        <sup>
+                            <abbr title="These changesets will be reverted">
+                                ?
+                            </abbr>
+                        </sup>
+                    </h5>
+                    <div><span class="counter">0</span> changesets</div>
+                </div>
+                <div class="changeset-list">
+                    <div class="clusterize-content">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer text-end">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </div>
+</div>
+
+<script>
+    window.changesets = JSON.parse('{{ tojson_orjson(changesets) | safe }}')
+</script>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+anyio = "*"
+asyncache = "*"
+authlib = "*"
+cachetools = "*"
+fastapi = "*"
+httpx = "*"
+itsdangerous = "*"
+jinja2 = "*"
+motor = "*"
+orjson = "*"
+psutil = "*"
+python-multipart = "*"
+pyyaml = "*"
+six = "*"
+starlette = "*"
+uvicorn = "*"
+xmltodict = "*"
+
+[dev-packages]
+autopep8 = "*"
+
+[requires]
+python_version = "3.11"

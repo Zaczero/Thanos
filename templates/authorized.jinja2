@@ -1,0 +1,48 @@
+{% extends '_base.jinja2' %}
+{% block body %}
+
+<form class="card" method="post" action="/query">
+    <div class="card-body">
+        <h5 class="card-title">Query changesets</h5>
+
+        <div class="mb-3">
+            <label class="form-label">
+                Time range (UTC):
+            </label>
+            <div class="row">
+                <div class="col">
+                    <input type="datetime-local" name="from_" class="form-control"
+                        min="{{ datetime_isoformat(time_range[0]) }}" max="{{ datetime_isoformat(time_range[1]) }}"
+                        value="{{ datetime_isoformat(time_range[1] - timedelta(days=1)) }}" required>
+                </div>
+                <div class="col-auto">
+                    →
+                </div>
+                <div class="col">
+                    <input type="datetime-local" name="to" class="form-control"
+                        min="{{ datetime_isoformat(time_range[0]) }}" max="{{ datetime_isoformat(time_range[1]) }}"
+                        value="{{ datetime_isoformat(time_range[1]) }}" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-1">
+            <label class="form-label">
+                Changeset tags:
+                <sup>
+                    <abbr
+                        title="Use KEY=VALUE for exact matches, and use KEY=* or KEY, for wildcard matches. Matching is case sensitive.">
+                        ?
+                    </abbr>
+                </sup>
+            </label>
+            <input class="form-control tagify" name="tags">
+        </div>
+
+    </div>
+    <div class="card-footer text-end">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </div>
+</form>
+
+{% endblock %}
