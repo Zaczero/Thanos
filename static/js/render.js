@@ -53,7 +53,7 @@ export const renderChangesets = changesets => {
         clusterize[category] = initClusterize(category)
     })
 
-    const ids = Object.keys(changesets)
+    const ids = Object.keys(changesets).map(id => parseInt(id))
     const rows = Object.values(changesets).map(cs => {
         const escapedUser = escapeHTML(cs['@user'])
         const escapedComment = escapeHTML(cs.tags.comment || '(no comment)')
@@ -100,4 +100,15 @@ export const renderChangesets = changesets => {
     `})
 
     clusterize.uncategorized.customUpdate(ids, rows)
+}
+
+const configureForm = document.getElementById('configure-form')
+if (configureForm) {
+    configureForm.addEventListener('submit', event => {
+        event.preventDefault()
+        const form = event.target
+        const ids = clusterize.malicious.ids
+        form.querySelector('input[name="changesets"]').value = JSON.stringify(ids)
+        form.submit()
+    })
 }

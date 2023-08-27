@@ -8,6 +8,7 @@ with pkgs; let
     python311
     zlib.out
     util-linux # lscpu
+    docker
   ];
 
   devBuildInputs = [

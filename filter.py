@@ -20,6 +20,12 @@ async def get_changesets_time_range() -> tuple[datetime, datetime]:
     return first_doc['@closed_at'], last_doc['@closed_at']
 
 
+async def get_specific_changesets_time_range(changesets: Sequence[int]) -> tuple[datetime, datetime]:
+    first_doc = await CHANGESET_COLLECTION.find_one({'@id': {'$in': changesets}}, sort=[('@closed_at', 1)], projection={'_id': False, '@closed_at': True})
+    last_doc = await CHANGESET_COLLECTION.find_one({'@id': {'$in': changesets}}, sort=[('@closed_at', -1)], projection={'_id': False, '@closed_at': True})
+    return first_doc['@closed_at'], last_doc['@closed_at']
+
+
 @cached(TTLCache(maxsize=1, ttl=8 * 3600))
 async def _fetch_deleted_users() -> frozenset[int]:
     async with get_http_client(OSM_PLANET_URL) as http:
@@ -67,6 +73,7 @@ async def _fetch_latest_user_info(uids: Sequence[int]) -> dict[int, dict | None]
         async def process(batch: Sequence[int]):
             r = await http.get('users.json', params={'users': ','.join(map(str, batch))})
 
+            # at some point, api returned 404 if at least one user is not found
             if r.status_code == 404:
                 if len(batch) == 1:
                     uid = batch[0]
@@ -78,10 +85,16 @@ async def _fetch_latest_user_info(uids: Sequence[int]) -> dict[int, dict | None]
                     tg.start_soon(process, batch2)
             else:
                 r.raise_for_status()
+                batch_set = set(batch)
+
                 for user in r.json()['users']:
                     user = user['user']
                     uid = user['id']
                     _user_info_cache[uid] = result[uid] = user
+                    batch_set.remove(uid)
+
+                for uid in batch_set:
+                    _user_info_cache[uid] = result[uid] = None
 
         uids_iter = iter(uids_set)
         batch_size = 500
@@ -103,15 +116,13 @@ async def query_changesets(from_: datetime, to: datetime, tags: Sequence[str]) -
         tag_query = {}
 
         for tag in tags:
-            tag_split = tag.strip().split('=', 1)
+            tag_split = tag.split('=', 1)
 
             if len(tag_split) == 2 and tag_split[1] != '*':
                 key, value = tag_split
-                key, value = key.strip(), value.strip()
                 tag_query[f'tags.{key}'] = value
             else:
                 key = tag_split[0]
-                key = key.strip()
                 tag_query[f'tags.{key}'] = {'$exists': True}
 
         query['$and'] = [{k: v} for k, v in tag_query.items()]

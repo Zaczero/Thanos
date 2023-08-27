@@ -1,0 +1,87 @@
+{% extends '_base.jinja2' %}
+{% block body %}
+
+<form class="card" method="post" action="/revert">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="card-title mb-0">Configure revert</h5>
+            <div><span class="counter">{{ changesets | length }}</span> changesets</div>
+        </div>
+
+        <label class="form-label d-block">
+            <a class="link-dark" href="https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL"
+                target="_blank">Overpass QL</a>
+            filter (optional):
+            <div class="small text-secondary"><i>Reverts elements that match either old or new, or both.</i></div>
+            <textarea name="query_filter" class="form-control" rows="2"
+                placeholder="node[ford=yes]; way[!highway]; rel(id:7532,99517)" spellcheck="false"></textarea>
+        </label>
+
+        <label class="form-label d-block">
+            <span class="required" title="This field is required">Comment:</span>
+            <sup>
+                <abbr title="The reverting changeset's comment">(?)</abbr>
+            </sup>
+            <textarea name="comment" class="form-control" rows="2" placeholder="I revert it because…" maxlength="255"
+                required></textarea>
+        </label>
+
+        <label class="form-label d-block">
+            Auto-discussion (optional):
+            <sup>
+                <abbr title="Comment on each of the reverted changesets">(?)</abbr>
+            </sup>
+            <textarea name="discussion" class="form-control" rows="2" placeholder="I reverted this changeset because…"
+                maxlength="2000"></textarea>
+        </label>
+
+        <label class="form-label d-block">
+            Revert to date (UTC) (optional):
+            <sup>
+                <abbr
+                    title="This should only be used in mass vandalism situations. It minimizes object history buildup and optimizes the revert process.">
+                    (?)
+                </abbr>
+            </sup>
+            <input type="datetime-local" name="revert_to_date" class="form-control"
+                max="{{ datetime_isoformat(time_range[0]) }}">
+        </label>
+        <div class="small alert alert-light py-1 px-2 mb-2" style="max-width:65ch">
+            Currently, revert to date works best in combination with the tags-only mode.
+            Otherwise, some changesets may not be reverted at all.
+            This will be fixed in the future.
+        </div>
+
+        <label class="form-label mb-0">
+            Tags-only mode (optional):
+            <sup>
+                <abbr
+                    title="Specify the ONLY tags that will be reverted. This option exclusively deals with tag keys and not their values. Matching is case sensitive.">
+                    (?)
+                </abbr>
+            </sup>
+        </label>
+        <input class="form-control tagify mb-2" name="only_tags">
+
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div>
+            <label class="form-check-label">
+                <input class="form-check-input" type="checkbox" required>
+                <span class="required" title="This field is required">I acknowledge that the vandalism has been
+                    stopped.</span>
+                <sup>
+                    <abbr title="Reverting when the vandalism is ongoing may lead to suboptimal results.">
+                        (?)
+                    </abbr>
+                </sup>
+            </label>
+        </div>
+        <div>
+            <input type="hidden" name="changesets" value="{{ changesets_encoded }}">
+            <button type="submit" class="btn btn-primary">Start revert</button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

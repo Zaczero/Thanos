@@ -22,3 +22,7 @@ if (window.changesets) {
 
     renderChangesets(window.changesets)
 }
+
+for (const e of document.querySelectorAll('.scroll-end')) {
+    e.scrollTop = e.scrollHeight
+}

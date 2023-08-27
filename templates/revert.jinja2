@@ -1,0 +1,69 @@
+{% extends '_base.jinja2' %}
+{% block body %}
+
+<div class="card">
+    <div class="card-header">
+        <div class="mb-2">
+            <label class="form-label mb-1">
+                Time range (UTC):
+            </label>
+            <div class="row">
+                <div class="col">
+                    <input type="datetime-local" class="form-control" value="{{ datetime_isoformat(time_range[0]) }}"
+                        readonly>
+                </div>
+                <div class="col-auto">
+                    →
+                </div>
+                <div class="col">
+                    <input type="datetime-local" class="form-control" value="{{ datetime_isoformat(time_range[1]) }}"
+                        readonly>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <label class="form-label mb-1">
+                Configuration:
+            </label>
+
+            <p class="mb-0">
+                {% for k, v in task.envs.items() %}
+                <span class="badge text-bg-success text-truncate">{{ k }}</span>
+                <span class="badge text-bg-success text-truncate">{{ v }}</span>
+                {% endfor %}
+
+                {% for v in task.options %}
+                <span class="badge text-bg-secondary text-truncate" style="max-width:60ch">{{ v }}</span>
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <textarea class="form-control scroll-end mb-1" rows="20"
+            readonly>{% for line in task.logs.queue %}{{ line }}&#10;{% endfor %}</textarea>
+
+        <div class="progress">
+            <div class="progress-bar" style="width:{{ (task.progress * 100) | int }}%">
+                {{ (task.progress * 100) | int }}%
+            </div>
+        </div>
+    </div>
+
+    {% if task.finished %}
+    <form class="card-footer text-end" method="post" action="/revert/{{ task.id }}/delete">
+        <button type="submit" class="btn btn-outline-secondary">🗑️ Cleanup</button>
+    </form>
+    {% else %}
+    <form class="card-footer text-end" method="post" action="/revert/{{ task.id }}/abort">
+        {% if task.aborted %}
+        <button type="button" class="btn btn-danger" disabled>⏳ Aborting...</button>
+        {% else %}
+        <button type="submit" class="btn btn-outline-danger">🛑 Abort</button>
+        {% endif %}
+    </form>
+    {% endif %}
+</div>
+
+{% endblock %}

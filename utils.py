@@ -1,4 +1,5 @@
 import functools
+import random
 import time
 import traceback
 from contextlib import contextmanager
@@ -44,13 +45,12 @@ def retry_exponential(timeout: timedelta | None, *, start: timedelta = timedelta
             while True:
                 try:
                     return await func(*args, **kwargs)
-                except Exception:
-                    print(f'[⛔] {func.__name__} failed')
-                    traceback.print_exc()
+                except Exception as e:
                     if (time.perf_counter() + sleep) - ts > timeout_seconds:
-                        raise
+                        print(f'[⛔] {func.__name__} failed')
+                        raise e
                     await anyio.sleep(sleep)
-                    sleep = min(sleep * 2, 4 * 3600)  # max 4 hours
+                    sleep = min(sleep * (1 + random.random()), 1800)  # max 30 minutes
 
         return wrapper
     return decorator
@@ -71,8 +71,8 @@ def get_http_client(base_url: str = '', *, auth: tuple | None = None, headers: d
     )
 
 
-def datetime_isoformat(dt: datetime) -> str:
-    return dt.isoformat('T', 'minutes')
+def datetime_isoformat(dt: datetime, timespec: str = 'minutes') -> str:
+    return dt.isoformat('T', timespec)
 
 
 def tojson_orjson(value) -> str:

@@ -3,7 +3,7 @@
 
 <div class="card mb-3">
     <div class="card-body pb-2">
-        <h5 class="card-title">Auto-move changesets</h5>
+        <h5 class="card-title">Filter changesets</h5>
         <div class="row">
             <div class="col text-center">
                 <div class="form-check">
@@ -48,9 +48,6 @@
             </div>
         </div>
     </div>
-</div>
-
-<div class="card">
     <div class="card-body">
         <div class="row">
             <div class="category col-4 border-end" id="legitimate">
@@ -79,7 +76,7 @@
                         Malicious
                         <sup>
                             <abbr title="These changesets will be reverted">
-                                ?
+                                (?)
                             </abbr>
                         </sup>
                     </h5>
@@ -92,9 +89,10 @@
             </div>
         </div>
     </div>
-    <div class="card-footer text-end">
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </div>
+    <form id="configure-form" class="card-footer text-end" method="post" action="/configure">
+        <input type="hidden" name="changesets" value="">
+        <button type="submit" class="btn btn-primary">Continue</button>
+    </form>
 </div>
 
 <script>

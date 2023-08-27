@@ -1,5 +1,8 @@
+import secrets
 from datetime import datetime, timedelta
-from typing import Annotated, Sequence
+from queue import Queue
+from shlex import quote
+from typing import Annotated
 
 import anyio
 import orjson
@@ -10,17 +13,21 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from config import OSM_CLIENT, OSM_SCOPES, OSM_SECRET, SECRET, USER_AGENT
+from config import (DRY_RUN, LOGS_QUEUE_SIZE, OSM_CLIENT, OSM_SCOPES,
+                    OSM_SECRET, SECRET, USER_AGENT)
 from config_db import setup_mongo
-from filter import get_changesets_time_range, query_changesets
+from filter import (get_changesets_time_range,
+                    get_specific_changesets_time_range, query_changesets)
 from replication_worker import ReplicationWorker
+from revert_manager import RevertManager
+from revert_task import RevertTask
 from states.worker_state import WorkerStateEnum, get_worker_state
 from user_session import (fetch_user_details, is_whitelisted,
-                          require_user_details, require_whitelisted,
+                          require_oauth_token, require_whitelisted,
                           set_oauth_token, unset_oauth_token)
 from utils import datetime_isoformat, print_run_time, tojson_orjson
 
-INDEX_REDIRECT = RedirectResponse('/', status_code=status.HTTP_302_FOUND)
+INDEX_REDIRECT = RedirectResponse('/', status_code=status.HTTP_303_SEE_OTHER)
 
 replication_worker = ReplicationWorker()
 
@@ -34,6 +41,8 @@ templates = Jinja2Templates(directory='templates')
 templates.env.globals['datetime_isoformat'] = datetime_isoformat
 templates.env.globals['timedelta'] = timedelta
 templates.env.globals['tojson_orjson'] = tojson_orjson
+
+revert_manager = RevertManager(app_tg)
 
 
 @app.on_event('startup')
@@ -58,7 +67,8 @@ async def index(request: Request, user=Depends(fetch_user_details)):
             return templates.TemplateResponse('authorized.jinja2', {
                 'request': request,
                 'user': user,
-                'time_range': await get_changesets_time_range()
+                'time_range': await get_changesets_time_range(),
+                'tasks': revert_manager.get_all(ascending=False),
             })
         else:
             return templates.TemplateResponse('unauthorized.jinja2', {'request': request, 'user': user})
@@ -66,8 +76,8 @@ async def index(request: Request, user=Depends(fetch_user_details)):
         return templates.TemplateResponse('index.jinja2', {'request': request})
 
 
-@app.post('/query')
-async def query(request: Request, from_: Annotated[datetime, Form()], to: Annotated[datetime, Form()], tags: Annotated[str, Form()] = None, user=Depends(require_whitelisted)):
+@app.post('/classify')
+async def classify(request: Request, from_: Annotated[datetime, Form()], to: Annotated[datetime, Form()], tags: Annotated[str, Form()] = None, user=Depends(require_whitelisted)):
     if tags:
         tags = orjson.loads(tags)
         tags = tuple(d['value'] for d in tags)
@@ -77,11 +87,118 @@ async def query(request: Request, from_: Annotated[datetime, Form()], to: Annota
     with print_run_time('Querying changesets'):
         changesets = await query_changesets(from_, to, tags)
 
-    return templates.TemplateResponse('query.jinja2', {
+    return templates.TemplateResponse('classify.jinja2', {
         'request': request,
         'user': user,
         'changesets': changesets,
     })
+
+
+@app.post('/configure')
+async def configure(request: Request, changesets: Annotated[str, Form()], user=Depends(require_whitelisted)):
+    changesets_encoded = changesets
+    changesets = orjson.loads(changesets)
+
+    if not changesets:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'No changesets specified')
+
+    return templates.TemplateResponse('configure.jinja2', {
+        'request': request,
+        'user': user,
+        'changesets_encoded': changesets_encoded,
+        'changesets': changesets,
+        'time_range': await get_specific_changesets_time_range(changesets),
+    })
+
+
+@app.post('/revert')
+async def post_revert(request: Request, changesets: Annotated[str, Form()], comment: Annotated[str, Form()], query_filter: Annotated[str, Form()] = None, discussion: Annotated[str, Form()] = None, revert_to_date: Annotated[datetime, Form()] = None, only_tags: Annotated[str, Form()] = None, token=Depends(require_oauth_token), user=Depends(require_whitelisted)):
+    changesets: list[int] = orjson.loads(changesets)
+    changesets.sort()
+    changesets.reverse()  # descending order
+
+    if not changesets:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'No changesets specified')
+
+    comment = comment.strip()
+    query_filter = query_filter.strip() if query_filter else ''
+    discussion = discussion.strip() if discussion else ''
+
+    time_range = await get_specific_changesets_time_range(changesets)
+    envs = {}
+
+    if revert_to_date:
+        if time_range[0] <= revert_to_date:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Revert to date must be before the oldest changeset')
+
+        envs['REVERT_TO_DATE'] = datetime_isoformat(revert_to_date, 'seconds') + 'Z'
+
+    if only_tags:
+        only_tags = orjson.loads(only_tags)
+        only_tags = tuple(d['value'] for d in only_tags)
+    else:
+        only_tags = tuple()
+
+    hidden_options = [
+        '--oauth_token', quote(orjson.dumps(token).decode()),
+    ]
+
+    options = [
+        '--query_filter', quote(query_filter),
+        '--comment', quote(comment),
+        '--discussion', quote(discussion),
+        '--discussion_target', 'all',
+        '--only_tags', ','.join(map(quote, only_tags)),
+    ]
+
+    if DRY_RUN:
+        options.append('--print_osc')
+        options.append('True')
+
+    task = RevertTask(
+        id=secrets.token_urlsafe(16),
+        changesets=changesets,
+        time_range=time_range,
+        envs=envs,
+        hidden_options=hidden_options,
+        options=options,
+        passes=1,
+        progress=0,
+        logs=Queue(maxsize=LOGS_QUEUE_SIZE),
+        parallel=bool(revert_to_date),
+        aborted=False,
+        finished=False,
+    )
+
+    revert_manager.submit(task)
+    return RedirectResponse(f'/revert/{task.id}', status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.get('/revert/{id}')
+async def get_revert(request: Request, id: str, user=Depends(require_whitelisted)):
+    task = revert_manager.get_by_id(id)
+
+    if task is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, 'Task not found')
+
+    return templates.TemplateResponse('revert.jinja2', {
+        'request': request,
+        'user': user,
+        'time_range': await get_specific_changesets_time_range(task.changesets),
+        'task': task,
+    })
+
+
+@app.post('/revert/{id}/abort')
+async def post_revert_abort(request: Request, id: str, user=Depends(require_whitelisted)):
+    revert_manager.abort_by_id(id)
+    return RedirectResponse(f'/revert/{id}', status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post('/revert/{id}/delete')
+async def post_revert_delete(request: Request, id: str, user=Depends(require_whitelisted)):
+    revert_manager.delete_by_id(id)
+    return INDEX_REDIRECT
 
 
 @app.post('/login')

@@ -60,3 +60,9 @@
 .form-check-label {
     user-select: none;
 }
+
+.required::after {
+    content: '*';
+    color: #e00;
+    font-weight: bold;
+}

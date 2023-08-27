@@ -46,6 +46,8 @@ async def fetch_user_details(request: Request = None, websocket: WebSocket = Non
     if 'img' not in user:
         user['img'] = {'href': None}
 
+    print(f'[AUTH] 🔒 Logged in as {user["display_name"]} ({user["id"]})')
+
     _user_cache[cache_key] = user
     return user
 

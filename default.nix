@@ -17,7 +17,7 @@ with pkgs; let
   };
 in
 dockerTools.buildLayeredImage {
-  name = "docker.monicz.pl/osm-revert-auto";
+  name = "docker.monicz.pl/osm-thanos";
   tag = "latest";
   maxLayers = 10;
 
@@ -29,6 +29,9 @@ dockerTools.buildLayeredImage {
     cp "${./.}"/LICENSE .
     cp "${./.}"/Makefile .
     cp "${./.}"/*.py .
+    cp -r "${./.}"/states .
+    cp -r "${./.}"/static .
+    cp -r "${./.}"/templates .
     export PATH="${esbuild}/bin:$PATH"
     ${shell.shellHook}
   '';
@@ -40,12 +43,11 @@ dockerTools.buildLayeredImage {
       "PYTHONPATH=${python-venv}/lib"
       "PYTHONUNBUFFERED=1"
       "PYTHONDONTWRITEBYTECODE=1"
-      "OSM_REVERT_VERSION_SUFFIX=docker-ui"
     ];
     Volumes = {
       "/app/data" = { };
     };
-    Entrypoint = [ "python" "main.py" ];
-    Cmd = [ ];
+    Entrypoint = [ "python" "-m" "uvicorn" "main:app" ];
+    Cmd = [ "--host" "0.0.0.0" ];
   };
 }
