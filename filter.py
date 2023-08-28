@@ -11,7 +11,7 @@ from config import OSM_API_URL, OSM_PLANET_URL
 from config_db import CHANGESET_COLLECTION
 from utils import get_http_client, print_run_time, retry_exponential
 
-_user_info_cache = TTLCache(maxsize=32 * 1024, ttl=24 * 3600)  # TODO: decrease TTL
+_user_info_cache = TTLCache(maxsize=32 * 1024, ttl=60)
 
 
 async def get_changesets_time_range() -> tuple[datetime, datetime]:
