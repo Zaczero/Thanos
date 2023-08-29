@@ -140,15 +140,15 @@ async def post_revert(request: Request, changesets: Annotated[str, Form()], comm
         only_tags = tuple()
 
     hidden_options = [
-        '--oauth_token', quote(orjson.dumps(token).decode()),
+        '--oauth_token', repr(orjson.dumps(token).decode()),
     ]
 
     options = [
-        '--query_filter', quote(query_filter),
-        '--comment', quote(comment),
-        '--discussion', quote(discussion),
-        '--discussion_target', 'all',
-        '--only_tags', ','.join(map(quote, only_tags)),
+        '--query_filter', repr(query_filter),
+        '--comment', repr(comment),
+        '--discussion', repr(discussion),
+        '--discussion_target', repr('all'),
+        '--only_tags', ','.join(map(repr, only_tags)),
     ]
 
     if DRY_RUN:
