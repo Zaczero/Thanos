@@ -41,7 +41,7 @@
     </div>
 
     <div class="card-body">
-        <textarea class="form-control scroll-end mb-1" rows="20"
+        <textarea class="form-control font-monospace scroll-end mb-1" rows="20"
             readonly>{% for line in task.logs.queue %}{{ line }}&#10;{% endfor %}</textarea>
 
         <div class="progress">
