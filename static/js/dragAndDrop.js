@@ -47,7 +47,7 @@ export const handleDragLeave = event => {
 export const handleDrop = event => {
     event.preventDefault()
 
-    const draggedItemId = event.dataTransfer.getData('text/plain')
+    const draggedItemId = parseInt(event.dataTransfer.getData('text/plain'))
     const draggedItem = document.querySelector(`.changeset-item[data-id="${draggedItemId}"]`)
     if (!draggedItem) {
         console.error(`Cannot find changeset item with id ${draggedItemId}`)
@@ -57,6 +57,10 @@ export const handleDrop = event => {
     const draggedCategory = draggedItem.closest('.category').id
     const draggedClusterize = clusterize[draggedCategory]
     const draggedItemIndex = draggedClusterize.ids.indexOf(draggedItemId)
+    if (draggedItemIndex < 0) {
+        console.error(`Cannot find clusterize index with id ${draggedItemId}`)
+        return
+    }
 
     document.querySelectorAll('.dragging-effects').forEach(e => e.classList.remove('dragging-effects'))
     dragEnterCounters.clear()
