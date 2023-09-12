@@ -7,6 +7,11 @@
 
 Mass-revert extension designed for [osm-revert](https://github.com/Zaczero/osm-revert).
 
+There is no public tutorial available on how to use this tool.
+Its intended users are solely the DWG team.
+The reason is that it's too easy to accidentally break something while using it.
+For everyday use, I suggest exploring the base https://revert.monicz.dev project.
+
 ## Footer
 
 ### Contact me
