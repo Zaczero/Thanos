@@ -25,6 +25,7 @@ async def revert_worker(task: RevertTask) -> None:
     num_workers = CHANGESET_CONCURRENCY if task.parallel else 1
     envs = []
     options = tuple(chain(task.hidden_options, task.options))
+    iterator_delay_seconds = task.iterator_delay.total_seconds()
 
     for k, v in task.envs.items():
         envs.append('--env')
@@ -75,6 +76,10 @@ async def revert_worker(task: RevertTask) -> None:
                 log(f'[INFO] ❌ Reverting {changeset} failed')
                 traceback.print_exc()
 
+            if iterator_delay_seconds > 0:
+                log(f'[INFO] 🕒 Delaying {iterator_delay_seconds} seconds...')
+                await anyio.sleep(iterator_delay_seconds)
+
     total_reverts = len(task.changesets) * task.passes
     reverts = 0
 
@@ -95,6 +100,7 @@ async def revert_worker(task: RevertTask) -> None:
                     await send_stream.send(changeset)
                     reverts += 1
                     task.progress = reverts / total_reverts
+
 
     assert reverts == total_reverts, f'{reverts} != {total_reverts}'
     log(f'[INFO] 🏁 Revert task finished')

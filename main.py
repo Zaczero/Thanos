@@ -112,7 +112,7 @@ async def configure(request: Request, changesets: Annotated[str, Form()], user=D
 
 
 @app.post('/revert')
-async def post_revert(request: Request, changesets: Annotated[str, Form()], comment: Annotated[str, Form()], query_filter: Annotated[str, Form()] = None, discussion: Annotated[str, Form()] = None, revert_to_date: Annotated[datetime, Form()] = None, only_tags: Annotated[str, Form()] = None, token=Depends(require_oauth_token), user=Depends(require_whitelisted)):
+async def post_revert(request: Request, changesets: Annotated[str, Form()], comment: Annotated[str, Form()], query_filter: Annotated[str, Form()] = None, discussion: Annotated[str, Form()] = None, revert_to_date: Annotated[datetime, Form()] = None, only_tags: Annotated[str, Form()] = None, iterator_delay: Annotated[str, Form()] = None, token=Depends(require_oauth_token), user=Depends(require_whitelisted)):
     changesets: list[int] = orjson.loads(changesets)
     changesets.sort()
     changesets.reverse()  # descending order
@@ -138,6 +138,14 @@ async def post_revert(request: Request, changesets: Annotated[str, Form()], comm
         only_tags = tuple(d['value'] for d in only_tags)
     else:
         only_tags = tuple()
+
+    if iterator_delay:
+        iterator_delay = float(iterator_delay)
+    else:
+        iterator_delay = 0
+
+    if iterator_delay < 0:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Iterator delay must be non-negative')
 
     hidden_options = [
         '--oauth_token', repr(orjson.dumps(token).decode()),
@@ -165,7 +173,8 @@ async def post_revert(request: Request, changesets: Annotated[str, Form()], comm
         passes=1,
         progress=0,
         logs=Queue(maxsize=LOGS_QUEUE_SIZE),
-        parallel=bool(revert_to_date),
+        iterator_delay=timedelta(minutes=iterator_delay),
+        parallel=bool(revert_to_date) and not iterator_delay,
         aborted=False,
         finished=False,
     )

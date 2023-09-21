@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from queue import Queue
 from typing import Sequence
 
@@ -15,6 +15,7 @@ class RevertTask:
     passes: int
     progress: float
     logs: Queue[str]
+    iterator_delay: timedelta
     parallel: bool
     aborted: bool
     finished: bool
