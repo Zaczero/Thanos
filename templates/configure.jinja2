@@ -36,6 +36,28 @@
         </label>
 
         <label class="form-label d-block">
+            Resolve parent conflicts:
+            <sup>
+                <abbr
+                    title="Parent conflicts occur when other changesets make dependencies on newly created elements">(?)</abbr>
+            </sup>
+            <div class="small mt-1">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" id="fp-t" type="radio" name="fix_parents" value="True" checked>
+                    <label class="form-check-label" for="fp-t">
+                        Forcefully remove conflicting elements
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" id="fp-f" type="radio" name="fix_parents" value="False">
+                    <label class="form-check-label" for="fp-f">
+                        Skip conflicting elements (assume they were fixed)
+                    </label>
+                </div>
+            </div>
+        </label>
+
+        <label class="form-label d-block">
             Revert to date (UTC) (optional):
             <sup>
                 <abbr

@@ -112,7 +112,7 @@ async def configure(request: Request, changesets: Annotated[str, Form()], user=D
 
 
 @app.post('/revert')
-async def post_revert(request: Request, changesets: Annotated[str, Form()], comment: Annotated[str, Form()], query_filter: Annotated[str, Form()] = None, discussion: Annotated[str, Form()] = None, revert_to_date: Annotated[datetime, Form()] = None, only_tags: Annotated[str, Form()] = None, iterator_delay: Annotated[str, Form()] = None, token=Depends(require_oauth_token), user=Depends(require_whitelisted)):
+async def post_revert(request: Request, changesets: Annotated[str, Form()], comment: Annotated[str, Form()], fix_parents: Annotated[bool, Form()], query_filter: Annotated[str, Form()] = None, discussion: Annotated[str, Form()] = None, revert_to_date: Annotated[datetime, Form()] = None, only_tags: Annotated[str, Form()] = None, iterator_delay: Annotated[str, Form()] = None, token=Depends(require_oauth_token), user=Depends(require_whitelisted)):
     changesets: list[int] = orjson.loads(changesets)
     changesets.sort()
     changesets.reverse()  # descending order
@@ -156,6 +156,7 @@ async def post_revert(request: Request, changesets: Annotated[str, Form()], comm
         '--comment', repr(comment),
         '--discussion', repr(discussion),
         '--discussion_target', repr('all'),
+        '--fix_parents', repr(fix_parents),
         '--only_tags', ','.join(map(repr, only_tags)),
     ]
 
