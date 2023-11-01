@@ -1,7 +1,6 @@
 import functools
 import random
 import time
-import traceback
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from math import inf
@@ -78,5 +77,5 @@ def datetime_isoformat(dt: datetime, timespec: str = 'minutes') -> str:
 def tojson_orjson(value) -> str:
     json = orjson.dumps(value, option=orjson.OPT_NON_STR_KEYS).decode()
     return (json
-        .replace('\\', '\\\\')
-        .replace('\'', '\\\''))
+            .replace('\\', '\\\\')
+            .replace('\'', '\\\''))
