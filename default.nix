@@ -17,7 +17,7 @@ with pkgs; let
   };
 in
 dockerTools.buildLayeredImage {
-  name = "docker.monicz.pl/osm-thanos";
+  name = "docker.monicz.dev/osm-thanos";
   tag = "latest";
   maxLayers = 10;
 
