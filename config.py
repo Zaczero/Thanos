@@ -43,7 +43,7 @@ REPLICATION_FREQUENCY = timedelta(minutes=1)
 REPLICATION_SLEEP = timedelta(seconds=30)
 
 OSM_PLANET_URL = 'https://planet.openstreetmap.org/'
-OSM_API_URL = 'https://www.openstreetmap.org/api/0.6/'
+OSM_API_URL = 'https://api.openstreetmap.org/api/0.6/'
 
 CHANGESET_CONCURRENCY = int(os.getenv('CHANGESET_CONCURRENCY', '5'))
 CHANGESET_MAX_AGE = timedelta(days=180)  # 6 months
