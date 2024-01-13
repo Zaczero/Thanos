@@ -1,6 +1,6 @@
 # 🆃hanos
 
-![Python version](https://shields.monicz.dev/badge/python-v3.11-blue)
+![Python version](https://shields.monicz.dev/badge/python-v3.12-blue)
 [![Project license](https://shields.monicz.dev/github/license/Zaczero/Thanos)](https://github.com/Zaczero/Thanos/blob/main/LICENSE)
 [![Support my work](https://shields.monicz.dev/badge/%E2%99%A5%EF%B8%8F%20Support%20my%20work-purple)](https://monicz.dev/#support-my-work)
 [![GitHub repo stars](https://shields.monicz.dev/github/stars/Zaczero/Thanos?style=social)](https://github.com/Zaczero/Thanos)
