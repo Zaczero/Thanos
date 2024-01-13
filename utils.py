@@ -1,10 +1,9 @@
 import functools
 import random
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from math import inf
-from typing import Generator
 
 import anyio
 import httpx
@@ -30,10 +29,7 @@ def print_run_time(message: str | list) -> Generator[None, None, None]:
 
 
 def retry_exponential(timeout: timedelta | None, *, start: timedelta = timedelta(seconds=1)):
-    if timeout is None:
-        timeout_seconds = inf
-    else:
-        timeout_seconds = timeout.total_seconds()
+    timeout_seconds = float('inf') if timeout is None else timeout.total_seconds()
 
     def decorator(func):
         @functools.wraps(func)
@@ -49,9 +45,10 @@ def retry_exponential(timeout: timedelta | None, *, start: timedelta = timedelta
                         print(f'[⛔] {func.__name__} failed')
                         raise e
                     await anyio.sleep(sleep)
-                    sleep = min(sleep * (1 + random.random()), 1800)  # max 30 minutes
+                    sleep = min(sleep * (1 + random.random()), 1800)  # max 30 minutes  # noqa: S311
 
         return wrapper
+
     return decorator
 
 
@@ -66,7 +63,7 @@ def get_http_client(base_url: str = '', *, auth: tuple | None = None, headers: d
         follow_redirects=True,
         timeout=60,
         auth=auth,
-        headers=headers
+        headers=headers,
     )
 
 
@@ -76,6 +73,4 @@ def datetime_isoformat(dt: datetime, timespec: str = 'minutes') -> str:
 
 def tojson_orjson(value) -> str:
     json = orjson.dumps(value, option=orjson.OPT_NON_STR_KEYS).decode()
-    return (json
-            .replace('\\', '\\\\')
-            .replace('\'', '\\\''))
+    return json.replace('\\', '\\\\').replace("'", "\\'")

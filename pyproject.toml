@@ -58,7 +58,10 @@ target-version = "py312"
 
 [tool.ruff.lint]
 ignore = [
-  "S101", # assert statements
+  "ARG001", # unused-function-argument
+  "B008", # function-call-in-default-argument
+  "S101", # assert
+  "S108", # hardcoded-temp-file
 ]
 select = [
   # see https://docs.astral.sh/ruff/rules/ for rules documentation

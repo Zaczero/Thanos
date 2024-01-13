@@ -1,7 +1,6 @@
 import gzip
+from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
-from itertools import count
-from typing import Sequence
 
 import anyio
 import xmltodict
@@ -9,8 +8,7 @@ import yaml
 from httpx import AsyncClient
 from pymongo import UpdateOne
 
-from config import (CHANGESET_MAX_AGE, REPLICATION_FREQUENCY,
-                    REPLICATION_SLEEP, REPLICATION_URL)
+from config import CHANGESET_MAX_AGE, REPLICATION_FREQUENCY, REPLICATION_SLEEP, REPLICATION_URL
 from config_db import CHANGESET_COLLECTION
 from state import get_state_doc, set_state_doc
 from utils import get_http_client, retry_exponential
@@ -19,7 +17,7 @@ from xmltodict_postprocessor import xmltodict_postprocessor
 
 def _format_sequence_number(sequence_number: int) -> str:
     result = f'{sequence_number:09d}'
-    result = '/'.join(result[i:i + 3] for i in range(0, 9, 3))
+    result = '/'.join(result[i : i + 3] for i in range(0, 9, 3))
     return result
 
 
@@ -65,6 +63,7 @@ async def _get_last_replication_id() -> int:
 async def _set_last_replication_id(repl_id: int):
     await set_state_doc('replication', {'last_replication_id': repl_id})
 
+
 @retry_exponential(None)
 async def _download_changesets(http: AsyncClient, repl_id: int) -> Sequence[dict] | None:
     r = await http.get(f'{_format_sequence_number(repl_id)}.osm.gz')
@@ -77,59 +76,38 @@ async def _download_changesets(http: AsyncClient, repl_id: int) -> Sequence[dict
 
     compressed = await r.aread()
     xml = gzip.decompress(compressed).decode()
-    json = xmltodict.parse(xml,
-                           postprocessor=xmltodict_postprocessor,
-                           force_list=('changeset', 'action', 'node', 'way', 'relation', 'member', 'tag', 'nd'))
+    json = xmltodict.parse(
+        xml,
+        postprocessor=xmltodict_postprocessor,
+        force_list=('changeset', 'action', 'node', 'way', 'relation', 'member', 'tag', 'nd'),
+    )
 
     changesets = json['osm'].get('changeset', [])
-    changesets = tuple(c for c in changesets
-                       if c['@comments_count'] == 0
-                       and c['@num_changes'] > 0
-                       and not c['@open'])
+    changesets = tuple(c for c in changesets if c['@comments_count'] == 0 and c['@num_changes'] > 0 and not c['@open'])
 
     for c in changesets:
         if 'tag' in c:
-            c['tags'] = {
-                tag['@k']: tag['@v']
-                for tag in c['tag']
-            }
-
+            c['tags'] = {tag['@k']: tag['@v'] for tag in c['tag']}
             del c['tag']
 
         # make empty tags easily searchable
         else:
-            c['tags'] = {
-                '__empty__': '1'
-            }
-
+            c['tags'] = {'__empty__': '1'}
 
     return changesets
 
 
 async def _save_changesets(changesets: Sequence[dict]) -> None:
-    bulk_write_args = []
-
-    for cs in changesets:
-        bulk_write_args.append(
-            UpdateOne(
-                {'@id': cs['@id']},
-                {'$set': cs},
-                upsert=True
-            )
-        )
-
+    bulk_write_args = [UpdateOne({'@id': cs['@id']}, {'$set': cs}, upsert=True) for cs in changesets]
     if bulk_write_args:
         await CHANGESET_COLLECTION.bulk_write(bulk_write_args, ordered=False)
 
 
 async def _cleanup_expired_changesets() -> None:
-    await CHANGESET_COLLECTION.delete_many({
-        '@closed_at': {'$lt': datetime.utcnow() - CHANGESET_MAX_AGE}
-    })
+    await CHANGESET_COLLECTION.delete_many({'@closed_at': {'$lt': datetime.utcnow() - CHANGESET_MAX_AGE}})
 
 
 class ReplicationWorker:
-
     @retry_exponential(None)
     async def run(self):
         last_replication_id = await _get_last_replication_id()

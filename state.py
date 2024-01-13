@@ -1,4 +1,3 @@
-
 from config_db import STATE_COLLECTION
 
 

@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from revert_task import RevertTask
 from revert_worker import revert_worker

@@ -37,22 +37,28 @@ async def revert_worker(task: RevertTask) -> None:
         async for changeset in recv_stream:
 
             @retry_exponential(timedelta(hours=2), start=timedelta(seconds=15))
-            async def inner() -> None:
+            async def inner(changeset) -> None:
                 if task.aborted:
                     return
 
                 log(f'[INFO] ⚙️ Reverting {changeset}...')
 
-                async with await anyio.open_process((
-                            'docker', 'run', '--rm',
-                            '--env', 'OSM_REVERT_VERSION_SUFFIX=thanos',
-                            *envs,
-                            'zaczero/osm-revert',
-                            '--changeset_ids', str(changeset),
-                            *options),
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT) as proc:
-
+                async with await anyio.open_process(
+                    (
+                        'docker',
+                        'run',
+                        '--rm',
+                        '--env',
+                        'OSM_REVERT_VERSION_SUFFIX=thanos',
+                        *envs,
+                        'zaczero/osm-revert',
+                        '--changeset_ids',
+                        str(changeset),
+                        *options,
+                    ),
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                ) as proc:
                     reader = BufferedByteReceiveStream(proc.stdout)
 
                     while True:
@@ -70,7 +76,7 @@ async def revert_worker(task: RevertTask) -> None:
                     raise RuntimeError(f'Reverting {changeset} failed: {proc.returncode}')
 
             try:
-                await inner()
+                await inner(changeset)
             except Exception:
                 # revert exceptions are non-critical but should be avoided
                 log(f'[INFO] ❌ Reverting {changeset} failed')
@@ -93,7 +99,7 @@ async def revert_worker(task: RevertTask) -> None:
             async with send_stream:
                 for changeset in task.changesets:
                     if task.aborted:
-                        log(f'[INFO] 🛑 Task aborted')
+                        log('[INFO] 🛑 Task aborted')
                         task.finished = True
                         return
 
@@ -101,7 +107,6 @@ async def revert_worker(task: RevertTask) -> None:
                     reverts += 1
                     task.progress = reverts / total_reverts
 
-
     assert reverts == total_reverts, f'{reverts} != {total_reverts}'
-    log(f'[INFO] 🏁 Revert task finished')
+    log('[INFO] 🏁 Revert task finished')
     task.finished = True

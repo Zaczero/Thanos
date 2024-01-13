@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from itertools import islice
-from typing import Sequence
 
 import anyio
 import pymongo
