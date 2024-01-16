@@ -62,7 +62,7 @@ let
     (writeShellScriptBin "docker-build-push" ''
       set -e
       if command -v podman &> /dev/null; then docker() { podman "$@"; } fi
-      docker load < "$(sudo nix-build --no-out-link)"
+      docker push $(docker load < $(sudo nix-build --no-out-link) | sed -En 's/Loaded image: (\S+)/\1/p')
     '')
   ];
 
