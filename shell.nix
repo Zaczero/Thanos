@@ -13,14 +13,13 @@ let
   packages' = with pkgs; [
     # Base packages
     python312
-    docker-client
     util-linux # for `lscpu`
     esbuild
 
     # Scripts
     # -- Misc
     (writeShellScriptBin "make-version" ''
-      sed -i -r "s|VERSION = '([0-9.]+)'|VERSION = '\1.$(date +%y%m%d)'|g" config.py
+      sed -i -r "s|VERSION_DATE = '.?'|VERSION_DATE = '$(date +%Y%m%d)'|g" config.py
     '')
     (writeShellScriptBin "make-bundle" ''
       chmod +w static/js static/css templates
@@ -43,29 +42,27 @@ let
     # Scripts
     # -- Docker (dev)
     (writeShellScriptBin "dev-start" ''
+      if command -v podman &> /dev/null; then docker() { podman "$@"; } fi
       docker compose -f docker-compose.dev.yml up -d
     '')
     (writeShellScriptBin "dev-stop" ''
+      if command -v podman &> /dev/null; then docker() { podman "$@"; } fi
       docker compose -f docker-compose.dev.yml down
     '')
     (writeShellScriptBin "dev-logs" ''
+      if command -v podman &> /dev/null; then docker() { podman "$@"; } fi
       docker compose -f docker-compose.dev.yml logs -f
     '')
     (writeShellScriptBin "dev-clean" ''
       dev-stop
-      rm -rf data/db
+      [ -d data/db ] && sudo rm -r data/db
     '')
 
     # -- Misc
     (writeShellScriptBin "docker-build-push" ''
       set -e
-      # Some data files require elevated permissions
-      if [ -d "$PROJECT_DIR/data" ]; then
-        image_path=$(sudo nix-build --no-out-link)
-      else
-        image_path=$(nix-build --no-out-link)
-      fi
-      docker push $(docker load < "$image_path" | sed -En 's/Loaded image: (\S+)/\1/p')
+      if command -v podman &> /dev/null; then docker() { podman "$@"; } fi
+      docker load < "$(sudo nix-build --no-out-link)"
     '')
   ];
 
@@ -85,8 +82,11 @@ let
 
     # Development environment variables
     export SECRET="development-secret"
+    export DRY_RUN="1"
+    export CHANGESET_MAX_AGE="1.5"
 
     if [ -f .env ]; then
+      echo "Loading .env file"
       set -o allexport
       source .env set
       +o allexport

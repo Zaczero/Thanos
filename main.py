@@ -155,7 +155,7 @@ async def post_revert(
     revert_to_date: Annotated[datetime | None, Form()] = None,
     only_tags: Annotated[str | None, Form()] = None,
     iterator_delay: Annotated[str | None, Form()] = None,
-    token=Depends(require_oauth_token),
+    oauth_token=Depends(require_oauth_token),
     user=Depends(require_whitelisted),
 ):
     changesets: list[int] = orjson.loads(changesets)
@@ -188,32 +188,24 @@ async def post_revert(
     if iterator_delay < 0:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Iterator delay must be non-negative')
 
-    hidden_options = [
-        '--oauth_token',
-        repr(orjson.dumps(token).decode()),
-    ]
+    hidden_options = {
+        'oauth_token': oauth_token,
+    }
 
-    options = [
-        '--query_filter',
-        repr(query_filter),
-        '--comment',
-        repr(comment),
-        '--discussion',
-        repr(discussion),
-        '--discussion_target',
-        repr('all'),
-        '--fix_parents',
-        repr(fix_parents),
-        '--only_tags',
-        ','.join(map(repr, only_tags)),
-    ]
+    options = {
+        'comment': comment,
+        'discussion': discussion,
+        'discussion_target': 'all',
+        'query_filter': query_filter,
+        'only_tags': only_tags,
+        'fix_parents': fix_parents,
+    }
 
     if DRY_RUN:
-        options.append('--print_osc')
-        options.append('True')
+        options['print_osc'] = True
 
     task = RevertTask(
-        id=secrets.token_urlsafe(16),
+        id=datetime_isoformat(datetime.utcnow(), 'seconds'),
         changesets=changesets,
         time_range=time_range,
         envs=envs,

@@ -2,7 +2,7 @@ version: "3"
 
 services:
   db:
-    image: mongo
+    image: docker.io/library/mongo
     command: mongod --bind_ip_all
 
     ports:

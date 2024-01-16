@@ -15,14 +15,28 @@ _user_info_cache = TTLCache(maxsize=32 * 1024, ttl=60)
 
 
 async def get_changesets_time_range() -> tuple[datetime, datetime]:
-    first_doc = await CHANGESET_COLLECTION.find_one(sort=[('@closed_at', 1)], projection={'_id': False, '@closed_at': True})
-    last_doc = await CHANGESET_COLLECTION.find_one(sort=[('@closed_at', -1)], projection={'_id': False, '@closed_at': True})
+    first_doc = await CHANGESET_COLLECTION.find_one(
+        sort=[('@closed_at', 1)],
+        projection={'_id': False, '@closed_at': True},
+    )
+    last_doc = await CHANGESET_COLLECTION.find_one(
+        sort=[('@closed_at', -1)],
+        projection={'_id': False, '@closed_at': True},
+    )
     return first_doc['@closed_at'], last_doc['@closed_at']
 
 
 async def get_specific_changesets_time_range(changesets: Sequence[int]) -> tuple[datetime, datetime]:
-    first_doc = await CHANGESET_COLLECTION.find_one({'@id': {'$in': changesets}}, sort=[('@closed_at', 1)], projection={'_id': False, '@closed_at': True})
-    last_doc = await CHANGESET_COLLECTION.find_one({'@id': {'$in': changesets}}, sort=[('@closed_at', -1)], projection={'_id': False, '@closed_at': True})
+    first_doc = await CHANGESET_COLLECTION.find_one(
+        {'@id': {'$in': changesets}},
+        sort=[('@closed_at', 1)],
+        projection={'_id': False, '@closed_at': True},
+    )
+    last_doc = await CHANGESET_COLLECTION.find_one(
+        {'@id': {'$in': changesets}},
+        sort=[('@closed_at', -1)],
+        projection={'_id': False, '@closed_at': True},
+    )
     return first_doc['@closed_at'], last_doc['@closed_at']
 
 
@@ -69,6 +83,7 @@ async def _fetch_latest_user_info(uids: Sequence[int]) -> dict[int, dict | None]
         return result
 
     async with get_http_client(OSM_API_URL) as http, anyio.create_task_group() as tg:
+
         @retry_exponential(timedelta(seconds=30))
         async def process(batch: Sequence[int]):
             r = await http.get('users.json', params={'users': ','.join(map(str, batch))})

@@ -33,8 +33,9 @@
                 <span class="badge text-bg-success text-truncate">{{ v }}</span>
                 {% endfor %}
 
-                {% for v in task.options %}
-                <span class="badge text-bg-secondary text-truncate" style="max-width:60ch">{{ v }}</span>
+                {% for k, v in task.options.items() %}
+                <span class="badge text-bg-secondary text-truncate"
+                    style="max-width:60ch">{{ k }}={{ '%r' | format(v) }}</span>
                 {% endfor %}
             </p>
         </div>

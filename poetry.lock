@@ -720,6 +720,26 @@ files = [
 ]
 
 [[package]]
+name = "osm-revert"
+version = "1.3.0"
+description = ""
+optional = false
+python-versions = "^3.12"
+files = []
+develop = false
+
+[package.dependencies]
+authlib = "^1.3.0"
+httpx = {version = "^0.26.0", extras = ["brotli", "http2"]}
+xmltodict = "^0.13.0"
+
+[package.source]
+type = "git"
+url = "https://github.com/Zaczero/osm-revert.git"
+reference = "HEAD"
+resolved_reference = "0e32535195aa3be947dcbc26d751f5ca74d5cdd3"
+
+[[package]]
 name = "psutil"
 version = "5.9.7"
 description = "Cross-platform lib for process and system monitoring in Python."
@@ -1374,4 +1394,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "d5b6070567264e628030d184150239e5b2563966c0f094ab1ff8f2c3484edfa0"
+content-hash = "4037160c5302e4378a9afa511f09b41e984c806d3cf23fcfbad9681f65f9bfa8"
