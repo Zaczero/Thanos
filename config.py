@@ -3,7 +3,7 @@ import secrets
 from datetime import timedelta
 
 NAME = 'osm-thanos'
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 VERSION_DATE = ''
 
 if VERSION_DATE:
